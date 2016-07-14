@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<title>M.A.K. Ripon</title>
+	<style>
+		table {
+			border: 2px solid green;
+		}
+		td {
+			border: 2px solid gray;
+			width: 300px;
+		}
+		#pageTitle {
+			text-align: center;
+			font-size: 200%;
+		}
+		#pageSubTitle {
+			text-align: center;
+		}
+		input {
+			display: block;
+			width: 100%;
+		}
+		input[type="number"] {
+			text-align: right;
+			background-color: #ff9;
+		}
+		input[type="text"] {
+			background-color: #ff9;
+		}
+		#host_size {
+			text-align: right;
+			padding-right: 15px;
+		}
+	</style>
+  </head>
+  <body>
+  	<div id="pageTitle">VLSM Calculator</div>
+  	<div id="pageSubTitle">Project By Muhammad Abdul Kader Ripon (M.A.K. Ripon)</div>
+  	<br />
+    <table align="center" valign="center" id="network_table">
+      <tbody>
+        <tr>
+          <td>Network IP:</td>
+          <td>
+            <input type="text" name="network_ip" id="network_ip" value="255.255.255.255" onChange="networkIPCheck(this.value)">
+          </td>
+        </tr>
+        <tr>
+          <td>Network IP Binary:</td>
+          <td>
+            <div id="ip_binary">11111111.11111111.11111111.11111111</div>
+          </td>
+        </tr>
+        <tr>
+          <td>Network Mask (IP / M):</td>
+          <td>
+            <input type="number" name="network_mask" id="network_mask" min="1" max="31" value="24" onChange="networkMaskCheck(this.value)">
+          </td>
+        </tr>
+        <tr>
+          <td>Subnet Mask:</td>
+          <td>
+            <div id="subnet_mask">255.255.255.0</div>
+          </td>
+        </tr>
+        <tr>
+          <td>Subnet Mask Binary:</td>
+          <td>
+            <div id="subnet_mask_binary">11111111.11111111.11111111.00000000</div>
+          </td>
+        </tr>
+        <tr>
+          <td>Subnets Amount:</td>
+          <td>
+			<input type="number" name="subnet_amount" id="subnet_amount" onChange="subnetTableCreate(this.value)" min="1" max="999" value="0" maxlength="3">
+		  </td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2">Subnets</td>
+        <tr>
+        <tr>
+          <td colspan="2">
+			<table id="subnet_table">
+              <tbody>
+                <tr>
+                  <td>Host Name</td>
+                  <td>Host Size</td>
+                </tr>
+              </tbody>
+            </table>
+		  </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+			<table>
+              <tbody>
+                <tr>
+				  <td>Total Hosts Size</td>
+				  <td id="host_size">0</td>
+                </tr>
+              </tbody>
+            </table>
+		  </td>
+        </tr>
+        <tr>
+          <td colspan="2" align="center"><input type="submit" onclick="subnetCalc()" name="subm" id="subm" value="Submit" disabled></td>
+        </tr>
+      </tbody>
+    </table>
+	<br />
+	<br />
+	<b><u>Sollution:</u></b>
+	<div id="sollution">
+	</div>
+
+	<script>
+		String.prototype.replaceAt=function(index, character) {
+		    return this.substr(0, index) + character + this.substr(index+character.length);
+		};
+
+		String.prototype.splice = function(idx, rem, str) {
+		    return this.slice(0, idx) + str + this.slice(idx + Math.abs(rem));
+		};
+
+		var AlphCaps = ["", 'A', 'B', 'C', 'D', 'E',
+							'F', 'G', 'H', 'I', 'J',
+							'K', 'L', 'M', 'N', 'O',
+							'P', 'Q', 'R', 'S', 'T',
+							'U', 'V', 'W', 'X', 'Y',
+							'Z'];
+		var AlphSmall= ["", 'a', 'b', 'c', 'd', 'e',
+							'f', 'g', 'h', 'i', 'j',
+							'k', 'l', 'm', 'n', 'o',
+							'p', 'q', 'r', 's', 't',
+							'u', 'v', 'w', 'x', 'y',
+							'z'];
+
+		function subnetTableCreate(v) {
+			var subm = document.getElementById("subm"),
+				subnet_table = document.getElementById("subnet_table"),
+				host_size = document.getElementById("host_size"),
+				sRowCount = subnet_table.rows.length,
+				subnet_amount = document.getElementById("subnet_amount"),
+				minValue = 1,
+				maxValue = 999,
+				sValue = v;
+				
+			if(v<minValue)
+				sValue = minValue;
+			if(v>maxValue)
+				sValue = maxValue;
+			subnet_amount.value = sValue;
+			
+			
+			if(sRowCount==sValue){
+				var row = subnet_table.insertRow(sRowCount);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				cell1.innerHTML = '<input type="text" id="subnet_name'+sRowCount+'" name="subnet_name'+sRowCount+'" value="HOST '+sRowCount+'">';
+				cell2.innerHTML = '<input type="number" min="0" id="subnet_size_'+sRowCount+'" onChange="subnetSizeCalcultation(this.value)" value="0">';
+			}
+			
+			if(sRowCount<sValue){
+				var tmp = sValue-sRowCount;
+				for(var i = 0; i<=tmp; i++){
+					var row = subnet_table.insertRow(sRowCount+i);
+					var cell1 = row.insertCell(0);
+					var cell2 = row.insertCell(1);
+					cell1.innerHTML = '<input type="text" id="subnet_name'+(sRowCount+i)+'" name="subnet_name'+(sRowCount+i)+'" value="HOST '+(sRowCount+i)+'">';
+					cell2.innerHTML = '<input type="number" min="0" id="subnet_size_'+(sRowCount+i)+'" onChange="subnetSizeCalcultation(this.value)" value="0">';
+				}
+			}
+			
+			if(sRowCount>sValue){
+				if(sRowCount-1==sValue){
+					subnet_table.deleteRow(sRowCount-1);
+				}else{
+					var tmp = sRowCount-sValue;
+					for(var i = 1; i<tmp; i++){
+						subnet_table.deleteRow(sRowCount-i);
+					}
+				}
+			}
+			
+			if(sValue>0){
+				subm.disabled = false;
+			}
+			var ttl = 0;
+			for (var i = 1; i <= sValue; i++) {
+				ttl+=parseInt(document.getElementById("subnet_size_"+i).value);
+			}
+			host_size.innerHTML = ttl;
+		}
+
+		function networkMaskCheck(v) {
+			var network_mask = document.getElementById("network_mask"),
+				ip_binary = document.getElementById("ip_binary").innerHTML,
+				minValue = 1,
+				maxValue = 31,
+				mValue = v;
+				
+			if(mValue<minValue)
+				mValue = minValue;
+			if(mValue>maxValue)
+				mValue = maxValue;
+			network_mask.value = mValue;
+			
+			var smb = maskToBinMaskAddr(mValue);
+			document.getElementById("subnet_mask_binary").innerHTML = smb;
+			document.getElementById("subnet_mask").innerHTML = binIpToDecIp(smb);
+		}
+
+		function subnetSizeCalcultation(v) {
+			var host_size = document.getElementById("host_size");
+			var subnet_amount = document.getElementById("subnet_amount").value;
+			var ttl = 0;
+			for (var i = 1; i <= subnet_amount; i++) {
+				ttl+=parseInt(document.getElementById("subnet_size_"+i).value);
+			}
+			host_size.innerHTML = ttl;
+		}
+
+		function decToBinary(dec){
+			return (dec >>> 0).toString(2);
+		}
+
+		function networkIPCheck(v) {
+			var network_ip = document.getElementById("network_ip"),
+				ip_binary = document.getElementById("ip_binary"),
+				fValue = "255.255.255.255",
+				fBValue = "";
+			if (/^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*$/.test(v)) {
+				fValue = v;
+			}else{
+				fValue = "255.255.255.255";
+			}
+			network_ip.value = fValue;
+			ip_binary.innerHTML = decIpToBinIp(fValue);
+			var network_mask = parseInt(document.getElementById("network_mask").value);
+			var smb = maskToBinMaskAddr(network_mask);
+			document.getElementById("subnet_mask_binary").innerHTML = smb;
+			document.getElementById("subnet_mask").innerHTML = binIpToDecIp(smb);
+		}
+		
+		function decIpToBinIp(str) {
+			var bVal = str.split(".");
+			var binIP = '';
+			for(var i = 0; i < bVal.length; i++){
+				binIP+=addLeadingZero(8, decToBinary(parseInt(bVal[i])));
+				if(i<bVal.length-1){
+					binIP+=".";
+				}
+			}
+		  	return binIP;
+		}
+
+		function maskToBinMaskAddr(a) {
+			var network_mask = parseInt(a);
+			var ipBin = '11111111111111111111111111111111';
+			for (var i = network_mask; i < 32; i++) {
+				ipBin = ipBin.replaceAt(i, "0");
+			}
+			return binDigitToBinIP(ipBin);
+		}
+
+		function binIPToBinMaskAddr(a, b) {
+			var network_mask = parseInt(a);
+			var ipArr = b.split('.');
+			var ipBin = ipArr[0]+ipArr[1]+ipArr[2]+ipArr[3];
+			for (var i = network_mask; i < 32; i++) {
+				ipBin = ipBin.replaceAt(i, "0");
+			}
+			return binDigitToBinIP(ipBin);
+		}
+
+		function binIpToDecIp(str) {
+		  var ipArr = str.split('.');
+		  var ipDec = parseInt(ipArr[0], 2)+'.'+parseInt(ipArr[1], 2)+'.'+parseInt(ipArr[2], 2)+'.'+parseInt(ipArr[3], 2);
+		  return ipDec;
+		}
+
+		function addLeadingZero(length, str) {
+		  var returnString = str.toString();
+		  var l = length-returnString.length;
+		  var zero = '';
+		  while(l>0){
+			zero+='0';
+			l--
+		  }
+		  return zero+returnString;
+		}
+		
+		function subnetCalc() {
+			var host_size = document.getElementById("host_size");
+			var subnet_amount = document.getElementById("subnet_amount");
+			var ip_binary = document.getElementById("ip_binary").innerHTML;
+			var smb = document.getElementById("subnet_mask_binary").innerHTML;
+			var subnetArray = [];
+			var sizeArray = [];
+			var tmpArray = [];
+			var fArray = [];
+			for (var i = 1; i <= parseInt(subnet_amount.value); i++) {
+				var subnetJson = {};
+				subnetJson.h = document.getElementById("subnet_name"+i).value;
+				subnetJson.s = parseInt(document.getElementById("subnet_size_"+i).value);
+				sizeArray.push(subnetJson.s);
+				subnetArray.push(subnetJson);
+			}
+			sizeArray.sort(sortNumber);
+			
+			for (var i = sizeArray.length-1; i >= 0; i--) {
+				for (var j = subnetArray.length-1; j >= 0; j--) {
+					if(subnetArray[j].s == sizeArray[i]){
+						tmpArray.push(subnetArray[j]);
+					}
+				}
+			}
+			
+			for (var i = 0; i < sizeArray.length; i++) {
+				fArray.push(tmpArray[i]);
+			}
+			
+			var sollution = document.getElementById("sollution");
+			sollution.innerHTML = "";
+			var tbl = document.createElement('table');
+			tbl.style.width = '100%';
+			tbl.style.textAlign = "center";
+			tbl.setAttribute('border', '1');
+			var tbdy = document.createElement('tbody');
+			var tr1 = document.createElement('tr');
+
+			var td1 = document.createElement('td');
+			td1.appendChild(document.createTextNode('Host Name'));
+			td1.style.fontWeight = "900";
+			tr1.appendChild(td1);
+
+			var td2 = document.createElement('td');
+			td2.appendChild(document.createTextNode('Host Size'));
+			td2.style.fontWeight = "900";
+			tr1.appendChild(td2);
+
+			var td3 = document.createElement('td');
+			td3.appendChild(document.createTextNode('Allocated Size'));
+			td3.style.fontWeight = "900";
+			tr1.appendChild(td3);
+
+			var td4 = document.createElement('td');
+			td4.appendChild(document.createTextNode('Unused Hosts'));
+			td4.style.fontWeight = "900";
+			tr1.appendChild(td4);
+
+			var td5 = document.createElement('td');
+			td5.appendChild(document.createTextNode('Network Mask'));
+			td5.style.fontWeight = "900";
+			tr1.appendChild(td5);
+
+			var td6 = document.createElement('td');
+			td6.appendChild(document.createTextNode('Mask Address'));
+			td6.style.fontWeight = "900";
+			tr1.appendChild(td6);
+
+			var td7 = document.createElement('td');
+			td7.appendChild(document.createTextNode('Network Address'));
+			td7.style.fontWeight = "900";
+			tr1.appendChild(td7);
+
+			var td8 = document.createElement('td');
+			td8.appendChild(document.createTextNode('Assignable Range'));
+			td8.style.fontWeight = "900";
+			td8.style.width = '900px';
+			tr1.appendChild(td8);
+
+			var td9 = document.createElement('td');
+			td9.appendChild(document.createTextNode('Broadcast Address'));
+			td9.style.fontWeight = "900";
+			tr1.appendChild(td9);
+
+			tbdy.appendChild(tr1);
+			var allocSizeArray = [];
+			var allocSize = '';
+			var ttlAllocSubnets = 0;
+			var mskBinAddr = '';
+			//var netAddr = ip_binary;
+			var binNetAddr = ip_binary;
+			var netAddr = '';
+			var netMsk = 32;
+			for (var i = 0; i < fArray.length; i++) {
+				var tr = document.createElement('tr');
+
+				/////////////////////Host Name/////////////////////
+				var td = document.createElement('td');
+				td.appendChild(document.createTextNode(fArray[i].h));
+				tr.appendChild(td);
+
+				/////////////////////Host Size/////////////////////
+				var td = document.createElement('td');
+				td.appendChild(document.createTextNode(fArray[i].s));
+				tr.appendChild(td);
+
+				/////////////////////Allocated Size/////////////////////
+				var td = document.createElement('td');
+				allocSize = allocatedSize(fArray[i].s, 1);
+				ttlAllocSubnets+=parseInt(allocSize);
+				td.appendChild(document.createTextNode(allocSize));
+				allocSizeArray.push(parseInt(allocSize)+2);
+				tr.appendChild(td);
+
+				/////////////////////Unused Hosts/////////////////////
+				var td = document.createElement('td');
+				td.appendChild(document.createTextNode(parseInt(allocSize)-parseInt(fArray[i].s)));
+				tr.appendChild(td);
+
+				/////////////////////Network Mask/////////////////////
+				var td = document.createElement('td');
+				netMsk = netMask(allocSize, 1);
+				td.appendChild(document.createTextNode('/'+netMsk));
+				tr.appendChild(td);
+
+				/////////////////////Mask Address/////////////////////
+				var td = document.createElement('td');
+				mskBinAddr = maskToBinMaskAddr(netMsk);
+				mskDecAddr = binIpToDecIp(mskBinAddr);
+				td.appendChild(document.createTextNode(mskDecAddr));
+				tr.appendChild(td);
+
+				/////////////////////Network Address/////////////////////
+				var td = document.createElement('td');
+				binNetAddr = binIPToBinMaskAddr(netMsk, binNetAddr);
+				netAddr = binIpToDecIp(binNetAddr);
+				td.appendChild(document.createTextNode(netAddr));
+				tr.appendChild(td);
+
+				/////////////////////Assignable Range/////////////////////
+				var td = document.createElement('td');
+				var tmp = binIPToBinDigit(binNetAddr);
+				tmp = binAdd(tmp, '1');
+				tmp = binDigitToBinIP(tmp);
+				tmp = binIpToDecIp(tmp);
+				var tmp2 = binIPToBinDigit(binNetAddr);
+				tmp2 = binAdd(tmp2, decToBinary(allocSize));
+				tmp2 = binDigitToBinIP(tmp2);
+				binNetAddr = tmp2;
+				tmp2 = binIpToDecIp(tmp2);
+				td.appendChild(document.createTextNode(tmp+' - '+tmp2));
+				tr.appendChild(td);
+
+				/////////////////////Broadcast Address/////////////////////
+				var td = document.createElement('td');
+				var tmp = binIPToBinDigit(binNetAddr);
+				tmp = binAdd(tmp, 1);
+				tmp = binDigitToBinIP(tmp);
+				binNetAddr = tmp;
+				tmp = binIpToDecIp(tmp);
+				td.appendChild(document.createTextNode(tmp));
+				tr.appendChild(td);
+
+				var tmp = binIPToBinDigit(binNetAddr);
+				tmp = binAdd(tmp, 1);
+				tmp = binDigitToBinIP(tmp);
+				binNetAddr = tmp;
+
+				tbdy.appendChild(tr);
+			}
+			tbl.appendChild(tbdy);
+			sollution.appendChild(tbl)
+		}
+
+		function binDigitToBinIP(a){
+			var r = addLeadingZero(32, a);
+			r = r.splice(8, 0, ".");
+			r = r.splice(17, 0, ".");
+			r = r.splice(26, 0, ".");
+			return r;
+		}
+
+		function binAdd(a,b){
+			var r = parseInt(a, 2)+parseInt(b, 2);
+			return decToBinary(r);
+		}
+
+		function binIPToBinDigit(a){
+			var r = a.split(".");
+			return r[0]+r[1]+r[2]+r[3];
+		}
+
+		function sortNumber(a,b) {
+		    return a - b;
+		}
+
+		function netMask(a,b) {
+			var l = parseInt(a)+2;
+			var i = parseInt(b);
+			var pV = Math.pow(2, i);
+			if(l<=pV)
+				return 32-i;
+			else
+				return netMask(a, i+1);
+		}
+
+		function allocatedSize(a, b) {
+			var hostSize = parseInt(a);
+			var incValue = parseInt(b);
+			var pV = Math.pow(2, incValue);
+			var allSize = pV-2;
+			if(hostSize<=allSize)
+				return allSize;
+			else
+				return allocatedSize(hostSize, incValue+1);
+		}
+	</script>
+  </body>
+</html>
